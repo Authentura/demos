@@ -1,2 +1,2 @@
-A repository of vulnerable systems and security demos for teaching
-==================================================================
+Vulnerable systems and exploit demos for teaching.
+==================================================
