@@ -2,6 +2,7 @@
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SSTI Demo</title>
 
 <!-- CSS taken from: https://www.w3schools.com/howto/howto_css_blurred_background.asp -->
 <style>
@@ -17,7 +18,7 @@ body, html {
 
 .bg-image {
   /* The image used */
-  background-image: url('{{ url_for('static', filename='images/authentura.png' ) }}');no-repeat 0px 0px;
+  background-image: url('{{ BASE_PATH }}/static/images/authentura.png');no-repeat 0px 0px;
   
   /* Add the blur effect */
   filter: blur(8px);

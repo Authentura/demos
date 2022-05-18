@@ -1,11 +1,12 @@
-import requests 
 from flask import Flask, render_template, render_template_string, url_for
+import os
+import requests
 
 app = Flask(__name__, static_folder="static")
 
 @app.route('/') 
 def index():
-    return render_template('index.html')
+    return render_template('index.html', BASE_PATH=os.environ["BASE_PATH"])
 
 @app.route('/<er>')
 def errorHandlerfunc(er):
