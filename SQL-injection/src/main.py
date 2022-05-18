@@ -26,7 +26,7 @@ class StaticFile(Resource):
 class Login(Resource):
     def get(self):
         """ Send the login page """
-        return send_file('templates/login.html')
+        return make_response(render_template('login.html'))
 
     def post(self):
         """ Get login credentials sent to user """
@@ -83,7 +83,7 @@ class Home(Resource):
 
 restful.add_resource(Home, "/")
 restful.add_resource(Login, "/login")
-restful.add_resource(StaticFile, "/static/<path>")
+restful.add_resource(StaticFile, f"/static/<path>")
 
 
 if __name__ == "__main__":
