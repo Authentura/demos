@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>File Inclusion Demo</title>
+
+<!-- CSS taken from: https://www.w3schools.com/howto/howto_css_blurred_background.asp -->
+<style>
+.background-image {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  display: block;
+  background-image: url('images/authentura.png');no-repeat 0px 0px;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  height: 100%;
+  -webkit-filter: blur(5px);
+  -moz-filter: blur(5px);
+  -o-filter: blur(5px);
+  -ms-filter: blur(5px);
+  filter: blur(5px);
+}
+
+.content {
+  position: fixed;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  margin-left: 20px;
+  margin-right: 20px;
+}
+</style>
+</head>
+
+<div class="background-image"></div>
+<div class="content">
+<h1>
+<center>
+<a href="level1.php" target="_blank">Level 1</a>
+<a href="level2.php" target="_blank">Level 2</a>
+</center>
+</h1>
+</div>
+</html>
