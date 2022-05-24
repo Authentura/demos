@@ -264,13 +264,7 @@ async fn main() {
     info!("BASE_PATH={base_path}");
     info!("Starting Warp server on http://0.0.0.0:3003...");
 
-    if base_path != "/" && !base_path.is_empty() {
-        warp::serve(index.or(warp::path(base_path).and(subroutes)))
-            .run(([0, 0, 0, 0], 3003))
-            .await;
-    } else {
-        warp::serve(index.or(subroutes))
-            .run(([0, 0, 0, 0], 3003))
-            .await;
-    }
+    warp::serve(index.or(subroutes))
+        .run(([0, 0, 0, 0], 3003))
+        .await;
 }

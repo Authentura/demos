@@ -20,7 +20,13 @@
     };
 
     const gotoDir = (directory) => {
-        window.location = getUriWithParam(`${window.location.origin}${window.location.pathname}`, { path: directory });
+        let base_path = "{{base_path}}";
+
+        if (base_path !== "") {
+            base_path = `/${base_path}`;
+        }
+
+        window.location = getUriWithParam(`${window.location.origin}${base_path}/files`, { path: directory });
     };
 
     const openFile = (path) => {
