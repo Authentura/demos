@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>File upload</title>
+</head>
+
+<body>
+    <h1>Please upload your file</h1>
+
+    <form action="{{base_path}}/upload_file" method="post" enctype="multipart/form-data">
+        <input type="file" name="uploaded" />
+        <input type="submit" />
+    </form>
+
+    <button onClick=window.location="{{base_path}}/files?path=.">View files</button>
+</body>
+
+</html>

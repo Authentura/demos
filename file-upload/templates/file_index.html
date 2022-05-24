@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>File upload</title>
+</head>
+
+<script>
+    const getUriWithParam = (url, params) => {
+        const Url = new URL(url);
+
+        const urlParams = new URLSearchParams(Url.search);
+        for (const key in params) {
+            if (params[key] !== undefined) {
+                urlParams.set(key, params[key]);
+            }
+        }
+        Url.search = urlParams.toString();
+        return Url.toString();
+    };
+
+    const gotoDir = (directory) => {
+        window.location = getUriWithParam(`${window.location.origin}${window.location.pathname}`, { path: directory });
+    };
+
+    const openFile = (path) => {
+        let base_path = "{{base_path}}";
+
+        if (base_path !== "") {
+            base_path = `/${base_path}`;
+        }
+
+        window.location = getUriWithParam(`${window.location.origin}${base_path}/get_file`, { file_path: path });
+
+    };
+</script>
+
+<body>
+    <h1>Contents of {{directory}}</h1>
+
+    <ul>
+        {{#each directory_contents}}
+        <p>
+        <pre>Name: {{this.name}} Path: {{this.path}} Type: {{this.content_type}}</pre>
+        {{#if this.is_dir}}
+        <button onClick=(gotoDir("{{this.path}}"))>Go to</button>
+        {{/if}}
+        {{#if this.is_file}}
+        <button onClick=(openFile("{{this.path}}"))>View</button>
+        {{/if}}
+        </p>
+        <hr />
+        {{/each}}
+    </ul>
+</body>
+
+</html>
