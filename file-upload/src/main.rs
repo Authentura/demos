@@ -4,7 +4,13 @@ use handlebars::Handlebars;
 use log::info;
 use serde::Serialize;
 use serde_json::json;
-use std::{collections::HashMap, fs::File, io::prelude::*, path::Path, sync::Arc};
+use std::{
+    collections::HashMap,
+    fs::{read_dir, File},
+    io::prelude::*,
+    path::Path,
+    sync::Arc,
+};
 use warp::{
     http::{Response, Uri},
     multipart::{FormData, Part},
@@ -14,6 +20,15 @@ use warp::{
 struct WithTemplate<T: Serialize> {
     name: &'static str,
     value: T,
+}
+
+#[derive(Serialize, Default, Clone)]
+struct Entry {
+    name: String,
+    path: String,
+    content_type: String,
+    is_dir: bool,
+    is_file: bool,
 }
 
 fn render<T: Serialize>(
@@ -73,11 +88,15 @@ async fn main() {
         "/"
     };
 
-    let template = include_str!("index.html");
+    let index = include_str!("../templates/index.html");
+    let file_index = include_str!("../templates/file_index.html");
+    let error = include_str!("../templates/error.html");
 
     let mut hb = Handlebars::new();
-    hb.register_template_string("template.html", template)
+    hb.register_template_string("index.html", index).unwrap();
+    hb.register_template_string("file_index.html", file_index)
         .unwrap();
+    hb.register_template_string("error.html", error).unwrap();
 
     let hb = Arc::new(hb);
 
@@ -115,6 +134,92 @@ async fn main() {
         );
 
     let bp = base_path.to_owned();
+    let file_listing = warp::get()
+        .and(warp::path("files"))
+        .and(warp::query::<HashMap<String, String>>())
+        .map(move |query: HashMap<String, String>| match query.get("path") {
+            // Some(path) => if let Ok(directory) = read_dir(path) {} else {Response},
+            Some(path) => match read_dir(path) {
+                Ok(dir_contents) => {
+                    let mut bp = bp.clone();
+
+                    if bp == "/" {
+                        bp = String::from("");
+                    }
+
+                    let mut directory_listing = vec![
+                        Entry {
+                            name: String::from("."),
+                            path: Path::new(&format!("{path}/.")).canonicalize().unwrap().as_os_str().to_string_lossy().into_owned(),
+                            content_type: String::from("Directory"),
+                            is_dir: true,
+                            is_file: false,
+                        },
+                        Entry {
+                            name: String::from(".."),
+                            path: Path::new(&format!("{path}/..")).canonicalize().unwrap().as_os_str().to_string_lossy().into_owned(),
+                            content_type: String::from("Directory"),
+                            is_dir: true,
+                            is_file: false,
+                        },
+                    ];
+
+                    for dir_entry in dir_contents.flatten() {
+                        let mut entry = Entry {
+                            ..Default::default()
+                        };
+
+                        entry.name = dir_entry.file_name().as_os_str().to_string_lossy().into_owned();
+
+                        entry.path = match dir_entry
+                            .path()
+                            .canonicalize()
+                            {
+                                Ok(p) => p,
+                                Err(_) => continue,
+                            }
+                            .as_os_str()
+                            .to_string_lossy()
+                            .into_owned();
+
+                        entry.content_type = if let Ok(file_type) = dir_entry.file_type()
+                        {
+                            if file_type.is_dir() {
+                                entry.is_dir = true;
+                                String::from("Directory")
+                            } else if file_type.is_file() {
+                                entry.is_file = true;
+                                String::from("File")
+                            } else if file_type.is_symlink() {
+                                String::from("Symbolic Link")
+                            } else {
+                                String::from("Unknown")
+                            }
+                        } else {
+                            String::from("Unknown")
+                        };
+
+                        directory_listing.push(entry);
+                    }
+
+                    WithTemplate {
+                        name: "file_index.html",
+                        value: json!({ "base_path": bp, "directory": path, "directory_contents": directory_listing }),
+                    }
+                },
+                Err(error) => WithTemplate {
+                    name: "error.html",
+                    value: json!(error.to_string()),
+                },
+            },
+            None => WithTemplate {
+                name: "error.html",
+                value: json!("path query param not found"),
+            },
+        })
+        .map(handlebars.clone());
+
+    let bp = base_path.to_owned();
     let upload_file = warp::post()
         .and(warp::path("upload_file"))
         .and(warp::multipart::form().max_length(1_074_000_000)) // 1 GB
@@ -148,13 +253,13 @@ async fn main() {
             }
 
             WithTemplate {
-                name: "template.html",
+                name: "index.html",
                 value: json!({ "base_path": bp }),
             }
         })
         .map(handlebars);
 
-    let subroutes = get_file.or(upload_file);
+    let subroutes = get_file.or(upload_file).or(file_listing);
 
     info!("BASE_PATH={base_path}");
     info!("Starting Warp server on http://0.0.0.0:3003...");
