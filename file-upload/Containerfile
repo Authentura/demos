@@ -2,7 +2,7 @@ FROM rust:alpine
 
 WORKDIR /app/www
 COPY . .
-RUN apk add --no-cache openssl-dev
+RUN apk add --no-cache openssl-dev musl-dev
 RUN cargo build --release
 
 EXPOSE 3003
