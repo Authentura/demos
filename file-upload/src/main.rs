@@ -1,6 +1,7 @@
 use bytes::BufMut;
 use futures_util::TryStreamExt;
 use handlebars::Handlebars;
+use log::info;
 use serde::Serialize;
 use serde_json::json;
 use std::{collections::HashMap, fs::File, io::prelude::*, path::Path, sync::Arc};
@@ -62,6 +63,8 @@ async fn upload_file(form: FormData) -> Result<String, warp::Rejection> {
 
 #[tokio::main]
 async fn main() {
+    let _ = pretty_env_logger::try_init();
+
     let template = include_str!("index.html");
 
     let mut hb = Handlebars::new();
@@ -123,5 +126,6 @@ async fn main() {
 
     let routes = index.or(get_file).or(upload_file);
 
-    warp::serve(routes).run(([127, 0, 0, 1], 3003)).await;
+    info!("Starting Warp server on http://0.0.0.0:3003...");
+    warp::serve(routes).run(([0, 0, 0, 0], 3003)).await;
 }

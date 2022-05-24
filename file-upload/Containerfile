@@ -6,4 +6,5 @@ RUN apk add --no-cache openssl-dev
 RUN cargo build --release
 
 EXPOSE 3003
+ENV RUST_LOG=info
 CMD ["cargo", "run", "--release"]
