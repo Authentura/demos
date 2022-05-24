@@ -1,0 +1,9 @@
+FROM rust:alpine
+
+WORKDIR /app/www
+COPY . .
+RUN apk add --no-cache openssl-dev
+RUN cargo build --release
+
+EXPOSE 3003
+CMD ["cargo", "run", "--release"]
