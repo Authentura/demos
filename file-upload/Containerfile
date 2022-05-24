@@ -7,4 +7,5 @@ RUN cargo build --release
 
 EXPOSE 3003
 ENV RUST_LOG=info
+ENV BASE_PATH=file-upload
 CMD ["cargo", "run", "--release"]

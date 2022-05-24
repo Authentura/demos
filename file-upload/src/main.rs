@@ -65,6 +65,14 @@ async fn upload_file(form: FormData) -> Result<String, warp::Rejection> {
 async fn main() {
     let _ = pretty_env_logger::try_init();
 
+    let base_path = option_env!("BASE_PATH");
+
+    let base_path = if let Some(base_path) = base_path {
+        base_path
+    } else {
+        "/"
+    };
+
     let template = include_str!("index.html");
 
     let mut hb = Handlebars::new();
@@ -106,26 +114,58 @@ async fn main() {
             },
         );
 
+    let bp = base_path.to_owned();
     let upload_file = warp::post()
         .and(warp::path("upload_file"))
         .and(warp::multipart::form().max_length(1_074_000_000)) // 1 GB
         .and_then(upload_file)
-        .map(|file_path| {
-            let uri: Uri = format!("/get_file?file_path={file_path}").parse().unwrap();
+        .map(move |file_path| {
+            let mut bp = bp.clone();
+
+            if bp == "/" {
+                bp = String::from("");
+            }
+
+            let uri: Uri = if !bp.is_empty() {
+                format!("/{bp}/get_file?file_path={file_path}").parse().unwrap()
+            } else {
+                format!("/get_file?file_path={file_path}").parse().unwrap()
+            };
+
+            info!("{:?}", &uri);
 
             warp::redirect(uri)
         });
 
+    let bp = base_path.to_owned();
     let index = warp::get()
         .and(warp::path::end())
-        .map(|| WithTemplate {
-            name: "template.html",
-            value: json!({}),
+        .map(move || {
+            let mut bp = bp.clone();
+
+            if bp == "/" {
+                bp = String::from("");
+            }
+
+            WithTemplate {
+                name: "template.html",
+                value: json!({ "base_path": bp }),
+            }
         })
         .map(handlebars);
 
-    let routes = index.or(get_file).or(upload_file);
+    let subroutes = get_file.or(upload_file);
 
+    info!("BASE_PATH={base_path}");
     info!("Starting Warp server on http://0.0.0.0:3003...");
-    warp::serve(routes).run(([0, 0, 0, 0], 3003)).await;
+
+    if base_path != "/" && !base_path.is_empty() {
+        warp::serve(index.or(warp::path(base_path).and(subroutes)))
+            .run(([0, 0, 0, 0], 3003))
+            .await;
+    } else {
+        warp::serve(index.or(subroutes))
+            .run(([0, 0, 0, 0], 3003))
+            .await;
+    }
 }
